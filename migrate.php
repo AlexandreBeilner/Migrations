@@ -148,32 +148,32 @@ foreach ($allConveniosLegado as $item){
 }
 //convenios adicionados;
 
-//procedimentos adicionados;
-$allProcedimentosLegado = $connTemp->query("SELECT procedimento FROM temp_agendamentos");
-$allProcedimentos = $connMedical->query("SELECT nome FROM procedimentos");
-$allProcedimentosLegado = transformInArray($allProcedimentosLegado);
-$allProcedimentos = transformInArray($allProcedimentos);
-
-$isAlreadyInNewDBProcedimentos = array_reduce($allProcedimentos, function ($reducer, $item){
-    $reducer[] = $item["nome"];
-    return $reducer;
-});
-
-foreach ($allProcedimentosLegado as $item){
-    if(!(in_array($item['procedimento'], $isAlreadyInNewDBProcedimentos))){
-        try {
-            $stmt = $connMedical->prepare("INSERT INTO procedimentos (nome) VALUES (?)");
-            $stmt->bind_param("s",$item['procedimento']);
-            $stmt->execute();
-            if($stmt->error){
-                throw new \Exception("Erro de inserção");
-            }
-        }catch (\Exception $e){
-            $connMedical->rollback();
-        }
-        $isAlreadyInNewDBProcedimentos[] = $item['procedimento'];
-    }
-}
+////procedimentos adicionados;
+//$allProcedimentosLegado = $connTemp->query("SELECT procedimento FROM temp_agendamentos");
+//$allProcedimentos = $connMedical->query("SELECT nome FROM procedimentos");
+//$allProcedimentosLegado = transformInArray($allProcedimentosLegado);
+//$allProcedimentos = transformInArray($allProcedimentos);
+//
+//$isAlreadyInNewDBProcedimentos = array_reduce($allProcedimentos, function ($reducer, $item){
+//    $reducer[] = $item["nome"];
+//    return $reducer;
+//});
+//
+//foreach ($allProcedimentosLegado as $item){
+//    if(!(in_array($item['procedimento'], $isAlreadyInNewDBProcedimentos))){
+//        try {
+//            $stmt = $connMedical->prepare("INSERT INTO procedimentos (nome) VALUES (?)");
+//            $stmt->bind_param("s",$item['procedimento']);
+//            $stmt->execute();
+//            if($stmt->error){
+//                throw new \Exception("Erro de inserção");
+//            }
+//        }catch (\Exception $e){
+//            $connMedical->rollback();
+//        }
+//        $isAlreadyInNewDBProcedimentos[] = $item['procedimento'];
+//    }
+//}
 //procedimentos adicionados;
 //$allProfissionaisLegado = $connTemp->query("SELECT medico FROM temp_agendamentos");
 //$allProfissionais = $connMedical->query("SELECT nome FROM profissionais");
