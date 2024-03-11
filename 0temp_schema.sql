@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS `0temp` DEFAULT CHARACTER SET utf8 ;
+USE `0temp` ;
+
 CREATE TABLE IF NOT EXISTS `0temp`.`temp_agendamentos` (
     cod_agendamento INT PRIMARY KEY,
     descricao VARCHAR(255),
