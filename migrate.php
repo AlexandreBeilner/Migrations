@@ -12,19 +12,21 @@
 
 // Importação de Bibliotecas:
 include "./lib.php";
-$os = strtolower(php_uname('s'));
-$conn = new mysqli("localhost", "root","root");
+
+//Criação dos bancos de dados
+$conn = new mysqli("localhost", "root", "root");
 $conn->query("CREATE DATABASE MedicalChallenge");
 $conn->query("CREATE DATABASE 0temp");
 
-if(str_contains($os, "windows")){
+//Verefica o sistema operacional e executa os camandos
+$os = strtolower(php_uname('s'));
+if (str_contains($os, "windows")) {
     exec("mysql --user=root --password=root MedicalChallenge < .\medical_challenge_schema.sql");
     exec("mysql --user=root --password=root 0temp < .\\0temp_schema.sql");
-}else{
+} else {
     exec("mysql --user=root --password=root MedicalChallenge < ./medical_challenge_schema.sql");
     exec("mysql --user=root --password=root 0temp < ./0temp_schema.sql");
 }
-
 
 
 // Conexão com o banco da clínica fictícia:
@@ -38,52 +40,65 @@ or die("Não foi possível conectar os servidor MySQL: 0temp\n");
 // Informações de Inicio da Migração:
 echo "Início da Migração: " . dateNow() . ".\n\n";
 
-
-/*
-  Seu código vai aqui!
-*/
-
+// Define duas variaveis com o caminho até os dados CSV
 $fileAgenName = "./dados_sistema_legado/20210512_agendamentos.csv";
 $filePacName = "./dados_sistema_legado/20210512_pacientes.csv";
+
+//Abre o arquivo em modo leitura
 $fileAgen = fopen($fileAgenName, "r");
 if (!$fileAgen) {
     die("Não foi possivel abrir o arquivo");
 }
+
+// Pega aprimeira linha do arquivo e trasforma em um array com o nome das colunas
 $AgenColumns = explode(";", fgets($fileAgen));
+//Prepara uma string com o nome das culunas separados por vírgula para a query
 $AgenColumns = implode(", ", $AgenColumns);
+
+// Faz a inserção no banco de dados temporario com os dados do CSV
 while (($line = fgets($fileAgen)) !== false) {
     $values = explode(";", $line);
     $values = "'" . implode("','", $values) . "'";
     $sqlQuery = "INSERT INTO temp_agendamentos ($AgenColumns) VALUES ($values)";
     $connTemp->query($sqlQuery);
 }
+// Fecha o arquivo
 fclose($fileAgen);
 
+//Abre o arquivo em modo leitura
 $filePac = fopen($filePacName, "r");
 if (!$filePac) {
     die("Não foi possivel abrir o arquivo");
 }
+
+//Pega a primeira linha do arquivo e trasforma em uma string com o nome das colunas
 $PacColumns = explode(";", fgets($filePac));
 $PacColumns = implode(", ", $PacColumns);
+
+// Faz a inserção no banco de dados temporario
 while (($line = fgets($filePac)) !== false) {
     $values = explode(";", $line);
     $values = "'" . implode("','", $values) . "'";
     $sqlQuery = "INSERT INTO temp_pacientes ($PacColumns) VALUES ($values)";
     $connTemp->query($sqlQuery);
 }
+// Fecha o arquivo
 fclose($filePac);
-//convenios adicionados;
-$allConveniosLegado = $connTemp->query("SELECT cod_convenio, convenio FROM temp_agendamentos");
-$allConvenios = $connMedical->query("SELECT id FROM convenios");
-$allConveniosLegado = transformInArray($allConveniosLegado);
-$allConvenios = transformInArray($allConvenios);
 
+// Busca os dados necessarios para a tabela convenios nos dois bancos
+$allConveniosLegado = transformInArray($connTemp->query("SELECT cod_convenio, convenio FROM temp_agendamentos"));
+$allConvenios = transformInArray($connMedical->query("SELECT id FROM convenios"));
+
+// Verefica quais dados ja estão presentes no novo banco e adiciona a um array
 $isAlreadyInNewDBConvenios = array_reduce($allConvenios, function ($reducer, $item) {
     $reducer[] = $item["id"];
     return $reducer;
 });
 
+//Faz a inserção se necessario na nova tabela convenios
 foreach ($allConveniosLegado as $item) {
+    // Verefica se o dado a ser inserido já existe no novo banco
+    // Caso nao exista faz a inserção
     if (!(in_array($item['cod_convenio'], $isAlreadyInNewDBConvenios))) {
         try {
             $stmt = $connMedical->prepare("INSERT INTO convenios (id, nome) VALUES (?, ?)");
@@ -95,23 +110,24 @@ foreach ($allConveniosLegado as $item) {
         } catch (\Exception $e) {
             $connMedical->rollback();
         }
+        // Adiciona o novo valor ao array que serve para a vereficação, assim evitando a duplicação
         $isAlreadyInNewDBConvenios[] = $item['cod_convenio'];
     }
 }
-//convenios adicionados;
 
-//procedimentos adicionados;
-$allProcedimentosLegado = $connTemp->query("SELECT procedimento FROM temp_agendamentos");
-$allProcedimentos = $connMedical->query("SELECT nome FROM procedimentos");
-$allProcedimentosLegado = transformInArray($allProcedimentosLegado);
-$allProcedimentos = transformInArray($allProcedimentos);
+//busca os dados necessarios para a tabela procedimentos nos dois bancos
+$allProcedimentosLegado = transformInArray($connTemp->query("SELECT procedimento FROM temp_agendamentos"));
+$allProcedimentos = transformInArray($connMedical->query("SELECT nome FROM procedimentos"));
 
+// Cria um array com os dados que ja estão inseridos no novo banco de dados
 $isAlreadyInNewDBProcedimentos = array_reduce($allProcedimentos, function ($reducer, $item) {
     $reducer[] = $item["nome"];
     return $reducer;
 });
 
+//Faz a inserção se necessario na nova tabela procedimentos
 foreach ($allProcedimentosLegado as $item) {
+    //verefica se o procedimento ja existe la, caso não exista faz a inserção
     if (!(in_array(trim($item['procedimento']), $isAlreadyInNewDBProcedimentos))) {
         try {
             $stmt = $connMedical->prepare("INSERT INTO procedimentos (nome) VALUES (?)");
@@ -123,23 +139,25 @@ foreach ($allProcedimentosLegado as $item) {
         } catch (\Exception $e) {
             $connMedical->rollback();
         }
+        // Adiciona o novo valor ao array que serve para a vereficação, assim evitando a duplicação
         $isAlreadyInNewDBProcedimentos[] = $item['procedimento'];
     }
 }
-//procedimentos adicionados;
 
-//adicionando profissionais
-$allProfissionaisLegado = $connTemp->query("SELECT cod_medico, medico FROM temp_agendamentos");
-$allProfissionais = $connMedical->query("SELECT nome FROM profissionais");
-$allProfissionaisLegado = transformInArray($allProfissionaisLegado);
-$allProfissionais = transformInArray($allProfissionais);
+//busca os dados necessarios para a tabela de profissionais em ambos os bancos
+$allProfissionaisLegado = transformInArray($connTemp->query("SELECT cod_medico, medico FROM temp_agendamentos"));
+$allProfissionais = transformInArray($connMedical->query("SELECT nome FROM profissionais"));
 
+//Cria um array com os proficionais que ja foram adicionados no novo banco
 $isAlreadyInNewDBProfissinais = array_reduce($allProfissionais, function ($reducer, $item) {
     $reducer[] = $item["nome"];
     return $reducer;
 });
 
+
+//Faz a inserção na nova tabela profissionais
 foreach ($allProfissionaisLegado as $item) {
+    //Verefica se o profissional ja está no novo banco
     if (!(in_array($item['medico'], $isAlreadyInNewDBProfissinais))) {
         try {
             $stmt = $connMedical->prepare("INSERT INTO profissionais (id, nome) VALUES (?, ?)");
@@ -151,15 +169,16 @@ foreach ($allProfissionaisLegado as $item) {
         } catch (\Exception $e) {
             $connMedical->rollback();
         }
+        // Adiciona o novo valor ao array que serve para a vereficação, assim evitando a duplicação
         $isAlreadyInNewDBProfissinais[] = $item['medico'];
     }
 }
-//profissionais adicionados
 
-//adicionando pacientes
-$allPacientesLegado = $connTemp->query("SELECT cod_paciente, nome_paciente, sexo_pac, nasc_paciente, cpf_paciente, rg_paciente, id_conv FROM temp_pacientes");
-$allPacientesLegado = transformInArray($allPacientesLegado);
 
+//Busca os dados necessarios para adicionar pacietes ao banco de dados
+$allPacientesLegado = transformInArray($connTemp->query("SELECT cod_paciente, nome_paciente, sexo_pac, nasc_paciente, cpf_paciente, rg_paciente, id_conv FROM temp_pacientes"));
+
+// Faz a formatação dos dados para ficarem no mesmo formato aos ja inseridos novo banco de dados
 array_walk($allPacientesLegado, function (&$item) {
     switch ($item['sexo_pac']) {
         case "M":
@@ -169,10 +188,14 @@ array_walk($allPacientesLegado, function (&$item) {
             $item['sexo_pac'] = "Feminino";
             break;
     }
+    //Muda o valor de dia/mes/ano para ano-mes-dia
     $item['nasc_paciente'] = implode('-', array_reverse(explode('/', $item['nasc_paciente'])));
+    //Remove os pontos do rg
     $item['rg_paciente'] = str_replace(".", "", $item['rg_paciente']);
 });
 
+
+//faz a inserção na nova tabela pacientes
 foreach ($allPacientesLegado as $item) {
     try {
         $stmt = $connMedical->prepare("INSERT INTO pacientes (nome, sexo, nascimento, cpf, rg, id_convenio, cod_referencia) VALUES (?, ?, ?, ?, ?,?, ?)");
@@ -185,19 +208,21 @@ foreach ($allPacientesLegado as $item) {
         $connMedical->rollback();
     }
 }
-//pacientes adicionados
-//
-//adicionando agendamentos
 
-$allAgendamentosLegado = $connTemp->query("SELECT  cod_paciente, cod_medico, dia, hora_inicio, hora_fim, cod_convenio, descricao, procedimento FROM temp_agendamentos");
-$allAgendamentosLegado = transformInArray($allAgendamentosLegado);
-$procedimentos = $connMedical->query("SELECT id, nome FROM procedimentos");
-$procedimentos = transformInArray($procedimentos);
 
+//busca os dados necessarios para a tabela agendamentos
+$allAgendamentosLegado = transformInArray($connTemp->query("SELECT  cod_paciente, cod_medico, dia, hora_inicio, hora_fim, cod_convenio, descricao, procedimento FROM temp_agendamentos"));
+$procedimentos = transformInArray($connMedical->query("SELECT id, nome FROM procedimentos"));
+
+
+//formata os dados para serem inseridos no banco
 array_walk($allAgendamentosLegado, function (&$item) use ($procedimentos) {
+    //format o valor de dia/mes/ano para ano-mes-dia
     $item['dia'] = implode('-', array_reverse(explode('/', $item['dia'])));
+    //adiciona .000 ao fim dos horarios
     $item['hora_fim'] = $item['hora_fim'] . ".000";
     $item['hora_inicio'] = $item['hora_inicio'] . ".000";
+    //altera o valor de item['procedimento'] para ao seu id, em vez do seu nome
     foreach ($procedimentos as $procedimento) {
         if (trim($item['procedimento']) === trim($procedimento['nome'])) {
             $item['procedimento'] = $procedimento['id'];
@@ -206,6 +231,7 @@ array_walk($allAgendamentosLegado, function (&$item) use ($procedimentos) {
     }
 });
 
+//faz a inserção na nova tabela agendamentos
 foreach ($allAgendamentosLegado as $item) {
     $codPaciente = $item['cod_paciente'];
     $dh_inicio = $item['dia'] . " " . $item['hora_inicio'];
@@ -223,21 +249,16 @@ foreach ($allAgendamentosLegado as $item) {
     }
 }
 
+//deleta o banco de dados temporario
 $conn->query("DROP DATABASE 0temp");
-//agendamentos adicionados
+
+// Fecha as conexões abertas
 $conn->close();
 $connMedical->close();
 $connTemp->close();
 
-
-// ... (seu código aqui)
-
-// Informações de Fim da Migração:
-echo "Fim da Migração: " . dateNow() . ".\n";
-
-// Geração do dump do banco de dados
+//gera o dump do banco de dados
 exec("mysqldump --user=root --password=root --host=localhost MedicalChallenge --result-file=dump.sql 2>&1", $output);
 
 // Informações de Fim da Migração:
 echo "Fim da Migração: " . dateNow() . ".\n";
-
