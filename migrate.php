@@ -86,7 +86,7 @@ while (($line = fgets($filePac)) !== false) {
 fclose($filePac);
 
 // Busca os dados necessarios para a tabela convenios nos dois bancos
-$allConveniosLegado = transformInArray($connTemp->query("SELECT cod_convenio, convenio FROM temp_agendamentos"));
+$allConveniosLegado = transformInArray($connTemp->query("SELECT DISTINCT cod_convenio, convenio FROM temp_agendamentos"));
 $allConvenios = transformInArray($connMedical->query("SELECT id FROM convenios"));
 
 // Verefica quais dados ja estão presentes no novo banco e adiciona a um array
@@ -116,7 +116,7 @@ foreach ($allConveniosLegado as $item) {
 }
 
 //busca os dados necessarios para a tabela procedimentos nos dois bancos
-$allProcedimentosLegado = transformInArray($connTemp->query("SELECT procedimento FROM temp_agendamentos"));
+$allProcedimentosLegado = transformInArray($connTemp->query("SELECT DISTINCT procedimento FROM temp_agendamentos"));
 $allProcedimentos = transformInArray($connMedical->query("SELECT nome FROM procedimentos"));
 
 // Cria um array com os dados que ja estão inseridos no novo banco de dados
@@ -145,7 +145,7 @@ foreach ($allProcedimentosLegado as $item) {
 }
 
 //busca os dados necessarios para a tabela de profissionais em ambos os bancos
-$allProfissionaisLegado = transformInArray($connTemp->query("SELECT cod_medico, medico FROM temp_agendamentos"));
+$allProfissionaisLegado = transformInArray($connTemp->query("SELECT DISTINCT cod_medico, medico FROM temp_agendamentos"));
 $allProfissionais = transformInArray($connMedical->query("SELECT nome FROM profissionais"));
 
 //Cria um array com os proficionais que ja foram adicionados no novo banco
