@@ -46,10 +46,6 @@ $filePacName = "./dados_sistema_legado/20210512_pacientes.csv";
 
 //Abre o arquivo em modo leitura
 $fileAgen = fopen($fileAgenName, "r");
-if (!$fileAgen) {
-    die("Não foi possivel abrir o arquivo");
-}
-
 // Pega aprimeira linha do arquivo e trasforma em um array com o nome das colunas
 $AgenColumns = explode(";", fgets($fileAgen));
 //Prepara uma string com o nome das culunas separados por vírgula para a query
@@ -67,10 +63,6 @@ fclose($fileAgen);
 
 //Abre o arquivo em modo leitura
 $filePac = fopen($filePacName, "r");
-if (!$filePac) {
-    die("Não foi possivel abrir o arquivo");
-}
-
 //Pega a primeira linha do arquivo e trasforma em uma string com o nome das colunas
 $PacColumns = explode(";", fgets($filePac));
 $PacColumns = implode(", ", $PacColumns);
@@ -258,7 +250,7 @@ $connMedical->close();
 $connTemp->close();
 
 //gera o dump do banco de dados
-exec("mysqldump --user=root --password=root --host=localhost MedicalChallenge --result-file=dump.sql 2>&1", $output);
+exec("mysqldump --user=root --password=root --host=localhost MedicalChallenge --result-file=dump.sql 2>&1");
 
 // Informações de Fim da Migração:
 echo "Fim da Migração: " . dateNow() . ".\n";

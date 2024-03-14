@@ -15,8 +15,6 @@ function transformInArray(mysqli_result $data): array{
         while ($row = $data->fetch_assoc()) {
             $allData[] = $row;
         }
-    } else {
-        die("Ocorreu algum erro na busca de dados em 0temp.temp_pacientes");
     }
     return $allData;
 }
