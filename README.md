@@ -1,43 +1,23 @@
-<h3 align="center">
-  :hammer_and_wrench: :computer:
-  <br><br>
-  Desafio de Migração de Dados
-</h3>
+## Descrição geral
 
-<blockquote align="center">Mostre que você domina os conceitos básicos para realizar uma migração de dados em PHP!</blockquote>
+Para realizar a migração eu primeiro busquei entender qual seria a relação entre as tabelas para assim fazer a inserção em ordem no banco de dados. Percebi que a tabela Convênios, Procedimentos e Profissionais não dependiam de nenhuma outra, então fiz a inserção delas primeiro, após isso fiz a migração para a tabela de pacientes que tinha relação de uma informação da tabela de convênios, e por último a tabela de agendamentos que tinha relação com todas as outras.
 
-<p align="center">
-  <img alt="License" src="https://shields.io/badge/PHP-grey?logo=php&style=flat">&nbsp;&nbsp;
-  <img alt="License" src="https://shields.io/badge/MySQL-grey?logo=mysql&style=flat">&nbsp;&nbsp;
-  <img alt="License" src="https://shields.io/badge/MariaDB-grey?logo=mariadb&style=flat">&nbsp;&nbsp;
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-%2304D361">
-</p>
 
-## :rocket: Sobre o Desafio:
+## Detalhes da Implementação
+O script estabelece conexões com os bancos de dados MedicalChallenge e 0temp, preparando-se para o processo de importação dos dados do sistema legado.
+A próxima fase envolve a leitura dos arquivos CSV do sistema legado e a importação desses dados para o banco de dados temporário 0temp, onde serão manipulados e preparados para a migração final.
+Durante a migração dos dados para o banco de dados MedicalChallenge, o script realiza uma verificação cuidadosa para evitar a duplicação de dados, garantindo a integridade do banco de dados final. Ele verifica se os dados já existem no MedicalChallenge antes de inseri-los, evitando assim redundâncias e mantendo a consistência dos registros.
+Por fim, o script conclui a migração gerando um dump dos dados já migrados para o banco de dados MedicalChallenge, fornecendo salvamento adicional e confirmando o término bem-sucedido do processo de migração. 
 
-Nesse desafio você deve desenvolver um script em PHP para migrar os dados entre dois sistemas médicos fictícios. Os dados do sistema legado foram extraídos no formato CSV e devem ser migrados para a estrutura do outro sistema, em uma banco de dados MySQL (recomendamos a utlização do MariaDB).
-
-## :medical_symbol: Contextualizando:
-
-Uma clínica médica está se atualizando e trocando de sistema. Para isso, é necessário migrar os dados dos seus pacientes e agendamentos para o novo sistema que será implantado, o MedicalChallenge. Os dados dos dois sistemas estão estruturados de formas diferentes, e o seu desafio é adequar e migrar os dados do sistema legado para o novo sistema. A clínica já cadastrou seus médicos e também alguns convênios, procedimentos, pacientes e agendamentos no sistema novo.
-
-## :dart: Objetivos:
-
-* Avaliar seus conhecimentos técnicos na linguagem PHP;
-* Avaliar seus conhecimentos técnicos em bancos de dados MySQL;
-* Avaliar sua capacidade na resolução de problemas lógicos.
-
-## :gem: Resultados Esperados:
-
-* Elaboração de uma função em PHP para importação dos dados em CSV para um banco MySQL;
-* Adequação dos dados do sistema legado para o formato exigido pelo banco do sistema MedicalChallenge;
-* Migração dos dados, respeitando todos os relacionamentos originais (do sistema legado);
-* Exportação do resultado final do banco de dados do sistema MedicalChallenge no próprio script em PHP.
-
-## :heavy_check_mark: Avaliação:
-
-1. Execução da estratégia utilizada para importação dos dados de CSV para o banco MySQL;
-2. Estratégia utilizada para manter os relacionamentos entre os dados;
-3. Tempo de execução da migração dos dados;
-4. Qualidade de código;
-5. Corretude.
+## Funções e Métodos Principais usados na Migração
+- mysqli_connect(): Esta função é usada para estabelecer uma conexão com um banco de dados MySQL.
+- mysqli_query(): Este método é usado para executar uma consulta SQL no banco de dados.
+- mysqli_prepare(): Este método é usado para preparar uma consulta SQL para execução.
+- ysqli_bind_param(): Este método é usado para vincular variáveis a uma consulta SQL preparada.
+- mysqli_execute(): Este método é usado para executar uma consulta SQL preparada.
+- mysqli_rollback(): Este método é usado para reverter uma transação se ocorrer um erro durante a execução de uma consulta SQL.
+- mysqli_close(): Este método é usado para fechar uma conexão com um banco de dados MySQL.
+- implode():  Une elementos do array com uma string
+- explode(): Divide uma string transformando-a em um array
+- fetch_assoc(): Transforma uma linha de uma busca em um array associativo
+- array_walk():Aplica uma função fornecida pelo usuário a cada membro de um array
